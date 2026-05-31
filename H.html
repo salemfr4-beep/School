@@ -1,0 +1,854 @@
+```html
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدرسة حشوة الأهلية الخاصة - البوابة الإلكترونية الشاملة</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            scroll-behavior: smooth;
+            background-color: #f8fafc;
+        }
+
+        /* حركات وانسيابية الواجهة */
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* تصميم الجداول للهواتف لمنع تداخل النصوص */
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* --- تنسيقات الطباعة وحفظ الـ PDF (الحل الجذري للورقة البيضاء) --- */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            /* إظهار حاوية النتيجة فقط */
+            #result-container, #result-container * {
+                visibility: visible;
+            }
+            #result-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+                background-color: white !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            /* فرض طباعة الألوان والخلفيات في المتصفح */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- رأس الصفحة (Header) -->
+    <header class="bg-white/90 backdrop-blur-md shadow-sm sticky top-0 z-40 no-print border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <!-- شعار المدرسة -->
+                <div class="flex items-center space-x-3 space-x-reverse cursor-pointer group" onclick="navigateTo('home')">
+                    <div class="p-2 sm:p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl sm:rounded-2xl text-white shadow-md transition-transform group-hover:scale-105">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13" />
+                        </svg>
+                    </div>
+                    <div class="flex flex-col">
+                        <h1 class="text-base sm:text-xl font-black text-slate-900 leading-tight">مدرسة حشوة الأهلية الخاصة</h1>
+                        <span class="text-[10px] sm:text-xs text-emerald-600 font-extrabold mt-0.5">تعليم متميز - حضرموت</span>
+                    </div>
+                </div>
+
+                <!-- أدوات التحكم والاتصال -->
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <!-- مؤشر الاتصال -->
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-full shadow-inner">
+                        <span id="sync-dot" class="h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="sync-text" class="hidden sm:inline text-[11px] font-bold text-slate-600">جاري الاتصال...</span>
+                    </div>
+
+                    <button onclick="navigateTo('home')" class="hidden sm:block text-slate-600 hover:text-emerald-600 text-sm font-bold transition-all px-2">الرئيسية</button>
+
+                    <button id="nav-btn-admin-gate" onclick="navigateTo('admin-login')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all shadow-md flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2" />
+                        </svg>
+                        الإدارة
+                    </button>
+                    <button id="nav-btn-logout" onclick="logoutAdmin()" class="hidden bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all shadow-md">
+                        تسجيل خروج
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-7xl">
+
+        <!-- ======================= [1] واجهة أولياء الأمور (الرئيسية) ======================= -->
+        <section id="view-home" class="space-y-12 animate-fade-in">
+            
+            <!-- البانر الترحيبي -->
+            <div class="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-900 rounded-[2rem] text-white p-6 sm:p-12 relative overflow-hidden shadow-lg shadow-emerald-600/20">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]"></div>
+                <div class="relative z-10 max-w-3xl space-y-5">
+                    <span class="bg-emerald-500/30 text-emerald-50 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider">البوابة الأكاديمية الرسمية</span>
+                    <h2 class="text-3xl sm:text-5xl lg:text-6xl font-black leading-tight">شريككم في بناء أجيال المستقبل</h2>
+                    <p class="text-emerald-50/90 text-sm sm:text-lg leading-relaxed">
+                        مدرسة حشوة الأهلية الخاصة تقدم بيئة تعليمية عصرية، وتتميز بنخبة من المعلمين من شتى مناطق حضرموت لتأسيس الطلاب في اللغات والعلوم منذ الصف الأول.
+                    </p>
+                    <div class="pt-4">
+                        <button onclick="scrollToSearchSection()" class="bg-white text-emerald-800 hover:bg-emerald-50 px-8 py-3.5 rounded-xl font-black text-sm sm:text-base transition-all shadow-md">
+                            استعلام نتائج الطلاب
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- محرك البحث لولي الأمر -->
+            <div id="parents-search-section" class="max-w-2xl mx-auto space-y-6 text-center pt-6">
+                <h3 class="text-2xl sm:text-3xl font-black text-slate-900">استخراج كشف الدرجات</h3>
+                <p class="text-slate-500 text-sm">يرجى كتابة رقم جلوس الطالب بدقة للحصول على الشهادة المعتمدة.</p>
+
+                <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-lg border border-slate-200/60 space-y-4">
+                    <input id="search-seat-number" type="text" placeholder="رقم الجلوس (مثال: 1001)" class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 text-xl font-black text-center tracking-widest transition-colors">
+                    <button onclick="searchStudentResult()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-xl text-base transition-all shadow-md flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        بحث واستخراج النتيجة
+                    </button>
+                </div>
+            </div>
+
+            <!-- الكشف والشهادة الأكاديمية (مهيئة للطباعة و PDF) -->
+            <div id="result-container" class="hidden max-w-5xl mx-auto bg-white rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden print-card animate-slide-up">
+                
+                <!-- ترويسة الشهادة الرسمية -->
+                <div class="bg-gradient-to-r from-emerald-800 to-teal-800 p-6 sm:p-10 text-white flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div class="text-center sm:text-right space-y-2">
+                        <span class="text-[10px] bg-emerald-900/50 text-emerald-50 px-3 py-1 rounded-full font-bold">الجمهورية اليمنية - حضرموت</span>
+                        <h4 class="text-xl sm:text-2xl font-black">مدرسة حشوة الأهلية الخاصة</h4>
+                        <p class="text-emerald-100/90 text-sm">بيان درجات وتقييمات الطالب - العام الدراسي الجاري</p>
+                    </div>
+                    
+                    <!-- أزرار الطباعة والـ PDF (مخفية عند الطباعة) -->
+                    <div class="flex gap-2 no-print">
+                        <button onclick="handlePrintPDF()" class="bg-white text-emerald-800 hover:bg-slate-100 px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            حفظ كـ PDF / طباعة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- بيانات الطالب -->
+                <div class="p-6 sm:p-8 bg-slate-50 border-b border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center sm:text-right">
+                    <div class="flex flex-col">
+                        <span class="text-slate-400 font-bold text-xs mb-1">اسم الطالب رباعي</span>
+                        <span id="res-student-name" class="font-black text-lg text-slate-800">---</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-slate-400 font-bold text-xs mb-1">رقم الجلوس</span>
+                        <span id="res-seat-number" class="font-black text-lg text-emerald-600 tracking-wider">---</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-slate-400 font-bold text-xs mb-1">الصف الدراسي</span>
+                        <span id="res-student-grade" class="font-black text-lg text-slate-800">---</span>
+                    </div>
+                </div>
+
+                <!-- السلوك والجداول -->
+                <div class="p-6 sm:p-8 space-y-8 bg-white">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                            <span class="text-sm font-bold text-slate-600">الانضباط والمواظبة:</span>
+                            <span id="res-discipline" class="font-black text-emerald-700 text-sm">---</span>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                            <span class="text-sm font-bold text-slate-600">السلوك والأخلاق:</span>
+                            <span id="res-behavior" class="font-black text-teal-700 text-sm">---</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h5 class="text-lg font-black text-slate-900 border-r-4 border-emerald-500 pr-3">
+                            التحصيل الأكاديمي للمواد الست الأساسية
+                        </h5>
+
+                        <div class="table-responsive border border-slate-200 rounded-xl">
+                            <table class="min-w-full divide-y divide-slate-200 text-center text-sm">
+                                <thead class="bg-slate-100 font-bold text-slate-700">
+                                    <tr>
+                                        <th class="px-4 py-3 text-right">المادة</th>
+                                        <th class="px-2 py-3">شفوي</th>
+                                        <th class="px-2 py-3">كتابي</th>
+                                        <th class="px-2 py-3 bg-emerald-50/50">ش1 (ف1)</th>
+                                        <th class="px-2 py-3 bg-emerald-50/50">ش2 (ف1)</th>
+                                        <th class="px-2 py-3 bg-emerald-100/50 text-emerald-800">نهائي ف1</th>
+                                        <th class="px-2 py-3 bg-teal-50/50">ش1 (ف2)</th>
+                                        <th class="px-2 py-3 bg-teal-50/50">ش2 (ف2)</th>
+                                        <th class="px-2 py-3 bg-teal-100/50 text-teal-800 font-black">النهائي العام</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-slate-100 font-semibold" id="res-subjects-table-body">
+                                    <!-- يتم البناء البرمجي هنا -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ملاحظات المدرس -->
+                    <div class="bg-emerald-50/50 border border-emerald-200 p-5 rounded-xl">
+                        <span class="text-emerald-800 font-bold text-sm block mb-2">📝 ملاحظات مربي الصف للإدارة والمنزل:</span>
+                        <p id="res-teacher-note" class="text-slate-700 text-sm leading-relaxed">---</p>
+                    </div>
+                </div>
+
+                <!-- تذييل الشهادة -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-between text-xs text-slate-500 font-semibold">
+                    <span>* كشف إلكتروني معتمد من إدارة مدرسة حشوة.</span>
+                    <span>الإدارة المدرسية</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= [2] واجهة تسجيل دخول الإدارة (Login) ======================= -->
+        <section id="view-admin-login" class="hidden max-w-md mx-auto py-12 animate-fade-in">
+            <div class="bg-white p-8 sm:p-10 rounded-[2rem] shadow-xl border border-slate-200 space-y-8">
+                <div class="text-center space-y-2">
+                    <div class="p-3 bg-slate-900 text-white rounded-2xl w-fit mx-auto shadow-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900">بوابة المعلمين</h3>
+                    <p class="text-slate-500 text-xs font-bold">تسجيل الدخول الآمن لإدارة درجات الطلاب</p>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- تم التغيير من PIN إلى إيميل وباسورد ليعمل مع Firebase Auth بشكل سليم -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">البريد الإلكتروني الإداري:</label>
+                        <input id="admin-email" type="email" placeholder="admin@school-d3cd2.com" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-semibold text-sm text-left" dir="ltr">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">كلمة المرور:</label>
+                        <input id="admin-password" type="password" placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-black text-lg text-center tracking-widest text-left" dir="ltr">
+                    </div>
+
+                    <button onclick="handleAdminLogin()" class="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-6 rounded-xl text-sm transition-all shadow-md">
+                        دخول وفتح السجلات
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= [3] لوحة رصد الإدارة (Admin Dashboard) ======================= -->
+        <section id="view-admin" class="hidden space-y-8 animate-fade-in">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-slate-900">لوحة تحكم رصد العلامات</h3>
+                        <p class="text-xs text-slate-500">مرحباً بك، أضف طلاباً أو قم بتعديل علاماتهم مباشرة.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تبويبات لوحة التحكم -->
+            <div class="flex flex-col sm:flex-row gap-3 border-b border-slate-200 pb-4">
+                <button onclick="switchAdminPanel('add')" id="btn-panel-add" class="flex-1 sm:flex-none px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl text-sm transition-all shadow-md">
+                    ➕ إضافة طالب جديد
+                </button>
+                <button onclick="switchAdminPanel('list')" id="btn-panel-list" class="flex-1 sm:flex-none px-6 py-3 bg-white text-slate-700 font-bold rounded-xl text-sm transition-all border border-slate-200">
+                    🗂️ عرض سجلات الطلاب
+                </button>
+            </div>
+
+            <!-- أ. لوحة إضافة طالب -->
+            <div id="panel-add" class="bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200 max-w-3xl mx-auto space-y-6 animate-slide-up">
+                <h4 class="text-xl font-black text-slate-900 border-b border-slate-100 pb-4">إنشاء سجل طالب وتجهيز كشفه</h4>
+                
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1.5">اسم الطالب رباعي: <span class="text-rose-500">*</span></label>
+                        <input id="inp-new-name" type="text" placeholder="الاسم الكامل" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-bold text-sm">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">رقم الجلوس (مفتاح البحث): <span class="text-rose-500">*</span></label>
+                            <input id="inp-new-seat" type="text" placeholder="مثال: 1001" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-black text-sm text-center tracking-widest">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1.5">الصف الدراسي: <span class="text-rose-500">*</span></label>
+                            <select id="inp-new-grade" class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 font-bold text-xs">
+                                <option value="الصف الأول الابتدائي">الصف الأول الابتدائي</option>
+                                <option value="الصف الثاني الابتدائي">الصف الثاني الابتدائي</option>
+                                <option value="الصف الثالث الابتدائي">الصف الثالث الابتدائي</option>
+                                <option value="الصف الرابع الابتدائي">الصف الرابع الابتدائي</option>
+                                <option value="الصف الخامس الابتدائي">الصف الخامس الابتدائي</option>
+                                <option value="الصف السادس الابتدائي">الصف السادس الابتدائي</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="createNewStudent()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-xl text-sm transition-all shadow-md">
+                        تكوين سجل الطالب السحابي
+                    </button>
+                </div>
+            </div>
+
+            <!-- ب. لوحة عرض الطلاب وجدول الإدارة -->
+            <div id="panel-list" class="hidden bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-slate-200 space-y-6 animate-slide-up">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-4">
+                    <h4 class="text-xl font-black text-slate-900">سجلات ومتابعة الطلاب</h4>
+                    <input id="admin-search" oninput="searchStudentsList()" type="text" placeholder="ابحث بالاسم أو رقم الجلوس..." class="w-full sm:w-72 px-4 py-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 text-xs font-bold">
+                </div>
+
+                <div class="table-responsive border border-slate-200 rounded-xl">
+                    <table class="min-w-full divide-y divide-slate-200 text-center text-sm">
+                        <thead class="bg-slate-100 font-bold text-slate-700">
+                            <tr>
+                                <th class="px-4 py-4 text-right">اسم الطالب</th>
+                                <th class="px-4 py-4">الجلوس</th>
+                                <th class="px-4 py-4">الصف الدراسي</th>
+                                <th class="px-4 py-4">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-100 font-semibold" id="students-table-body">
+                            <!-- Data injected via JS -->
+                            <tr><td colspan="4" class="py-8 text-slate-500 text-xs">جاري التحميل من الخادم...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ======================= النموذج المنبثق لرصد وتعديل الدرجات (المودال) ======================= -->
+    <div id="grades-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden p-4 sm:p-6 no-print">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[95vh] overflow-y-auto transform scale-95 transition-all duration-300 flex flex-col" id="modal-card">
+            
+            <!-- الهيدر الثابت للمودال -->
+            <div class="sticky top-0 bg-white z-10 p-6 border-b border-slate-200 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-4">
+                <div>
+                    <h3 id="modal-student-name" class="text-xl font-black text-slate-900">اسم الطالب: ---</h3>
+                    <p id="modal-student-info" class="text-xs text-emerald-600 font-bold mt-1">الجلوس: --- | الصف: ---</p>
+                </div>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="saveStudentGrades()" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg text-sm shadow-md">حفظ</button>
+                    <button onclick="closeGradesModal()" class="flex-1 sm:flex-none bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-4 rounded-lg text-sm">إغلاق</button>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <!-- أزرار تبويبات المواد -->
+                <div class="flex overflow-x-auto gap-2 border-b border-slate-200 pb-2" id="admin-tabs-nav">
+                    <!-- Buttons generated dynamically in JS -->
+                </div>
+
+                <!-- محتوى التبويبات -->
+                <div id="modal-tab-contents" class="space-y-6 pt-2">
+                    
+                    <!-- التبويب العام (سلوكيات) -->
+                    <div id="modal-content-general" class="space-y-4 animate-fade-in hidden">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">الانضباط والمواظبة:</label>
+                                <input id="inp-discipline" type="text" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold focus:border-emerald-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">السلوك والأخلاق:</label>
+                                <input id="inp-behavior" type="text" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold focus:border-emerald-500 outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">تعديل الصف الدراسي:</label>
+                            <input id="inp-edit-grade" type="text" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold focus:border-emerald-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">ملاحظة المدرس وتوجيهات الإدارة:</label>
+                            <textarea id="inp-teacher-note" rows="3" class="w-full px-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:border-emerald-500 outline-none"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- تبويب المواد (ديناميكي) -->
+                    <div id="modal-content-subjects" class="hidden space-y-6 animate-fade-in">
+                        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-lg text-xs font-bold flex justify-between items-center">
+                            <span>المادة: <strong id="active-subject-title" class="text-sm text-emerald-900">---</strong></span>
+                            <span class="text-[10px] opacity-75">سيتم الحفظ عند ضغط الزر العلوي</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- التقييم المستمر -->
+                            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                                <h6 class="text-xs font-black text-slate-800 mb-3 border-b border-slate-200 pb-2">التقييم المستمر</h6>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="text-[10px] font-bold text-slate-500">شفوي</label><input id="inp-sub-oral" type="text" class="w-full p-2 border rounded-md text-center text-sm font-bold mt-1"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500">كتابي</label><input id="inp-sub-written" type="text" class="w-full p-2 border rounded-md text-center text-sm font-bold mt-1"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- الفصل الأول -->
+                            <div class="bg-emerald-50/50 border border-emerald-100 p-4 rounded-xl">
+                                <h6 class="text-xs font-black text-emerald-800 mb-3 border-b border-emerald-100 pb-2">الفصل الدراسي الأول</h6>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div><label class="text-[10px] font-bold text-slate-500">ش1</label><input id="inp-sub-t1-m1" type="text" class="w-full p-2 border rounded-md text-center text-sm font-bold mt-1"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500">ش2</label><input id="inp-sub-t1-m2" type="text" class="w-full p-2 border rounded-md text-center text-sm font-bold mt-1"></div>
+                                    <div><label class="text-[10px] font-black text-emerald-700">نهائي ف1</label><input id="inp-sub-t1-final" type="text" class="w-full p-2 border border-emerald-300 rounded-md text-center text-sm font-black mt-1"></div>
+                                </div>
+                            </div>
+
+                            <!-- الفصل الثاني -->
+                            <div class="bg-teal-50/50 border border-teal-100 p-4 rounded-xl md:col-span-2">
+                                <h6 class="text-xs font-black text-teal-800 mb-3 border-b border-teal-100 pb-2">الفصل الدراسي الثاني (التحصيل العام)</h6>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div><label class="text-[10px] font-bold text-slate-500">ش1 (ف2)</label><input id="inp-sub-t2-m1" type="text" class="w-full p-2 border rounded-md text-center text-sm font-bold mt-1"></div>
+                                    <div><label class="text-[10px] font-bold text-slate-500">ش2 (ف2)</label><input id="inp-sub-t2-m2" type="text" class="w-full p-2 border rounded-md text-center text-sm font-bold mt-1"></div>
+                                    <div><label class="text-[10px] font-black text-teal-700">نهائي العام</label><input id="inp-sub-t2-final" type="text" class="w-full p-2 border border-teal-300 rounded-md text-center text-sm font-black mt-1 bg-white"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نظام التنبيهات ونوافذ الحوار المخصصة (Alerts) -->
+    <div id="alert-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4 no-print">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center transform scale-95 transition-all duration-300" id="alert-card">
+            <h4 id="alert-title" class="text-lg font-black mb-2 text-slate-800">تنبيه</h4>
+            <p id="alert-message" class="text-sm text-slate-600 mb-6 font-semibold"></p>
+            <button onclick="closeAlertModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md">إغلاق وتأكيد</button>
+        </div>
+    </div>
+
+    <footer class="bg-slate-900 text-slate-400 py-6 mt-auto text-center text-[11px] sm:text-xs font-semibold no-print">
+        &copy; 2026 مدرسة حشوة الأهلية الخاصة - جميع الحقوق محفوظة لوزارة التربية والتعليم.
+    </footer>
+
+    <!-- ======================= [الـ JavaScript وقاعدة البيانات - Firebase Modular] ======================= -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // إعدادات مشروعك
+        const firebaseConfig = {
+            apiKey: "AIzaSyAp51RYC2OWsfM7zwAiwc2tL-ZtS2Fx98M",
+            authDomain: "school-d3cd2.firebaseapp.com",
+            projectId: "school-d3cd2",
+            storageBucket: "school-d3cd2.firebasestorage.app",
+            messagingSenderId: "659428097930",
+            appId: "1:659428097930:web:0fab829535ac7f84931273",
+            measurementId: "G-E6Q2VN7MM0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // متغيرات النظام
+        const appId = "school-d3cd2";
+        const collectionPath = `artifacts/${appId}/public/data/students`;
+        let userAuthenticated = false;
+        let globalStudentsList = []; 
+        let currentEditingSeatNumber = null;
+        let currentActiveModalTab = "general";
+
+        const subjectsList = [
+            { key: "arabic", label: "اللغة العربية" },
+            { key: "english", label: "اللغة الإنجليزية" },
+            { key: "quran", label: "القرآن الكريم" },
+            { key: "islamic", label: "التربية الإسلامية" },
+            { key: "science", label: "العلوم" },
+            { key: "math", label: "الرياضيات" }
+        ];
+
+        let tempGradesData = { arabic:{}, english:{}, quran:{}, islamic:{}, science:{}, math:{} };
+
+        // 1. تهيئة الاتصال والمصادقة
+        async function startFirebaseSession() {
+            const dot = document.getElementById("sync-dot");
+            const txt = document.getElementById("sync-text");
+            try {
+                // دخول كزائر للقراءة فقط في البداية
+                await signInAnonymously(auth);
+                
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userAuthenticated = true;
+                        dot.className = "h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse";
+                        txt.innerText = "متصل سحابياً";
+                        listenToStudents();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase Error: ", error);
+                dot.className = "h-2.5 w-2.5 rounded-full bg-rose-500";
+                txt.innerText = "غير متصل";
+            }
+        }
+
+        // 2. تسجيل دخول المعلم / الإدارة (تم استخدام الإيميل والباسورد الخاص بك للحماية التامة)
+        window.handleAdminLogin = async function() {
+            const email = document.getElementById("admin-email").value.trim();
+            const password = document.getElementById("admin-password").value;
+            
+            if(!email || !password) {
+                window.showAlert("يرجى إدخال البريد الإلكتروني وكلمة المرور.", "warning");
+                return;
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                document.getElementById("admin-email").value = "";
+                document.getElementById("admin-password").value = "";
+                
+                window.navigateTo('admin');
+                window.showAlert("تم تسجيل الدخول بصلاحيات الإدارة بنجاح.", "success");
+            } catch (error) {
+                window.showAlert("خطأ في بيانات الدخول، تأكد من الإيميل وكلمة المرور المعتمدة.", "error");
+            }
+        };
+
+        // 3. تسجيل خروج الإدارة والعودة كزائر
+        window.logoutAdmin = async function() {
+            try {
+                await signOut(auth);
+                await signInAnonymously(auth);
+                window.navigateTo('home');
+                window.showAlert("تم تسجيل الخروج وتأمين قاعدة البيانات.", "success");
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        // 4. مراقبة كشوف الطلاب مباشرة للجدول
+        function listenToStudents() {
+            const q = query(collection(db, ...collectionPath.split('/')));
+            onSnapshot(q, (snapshot) => {
+                globalStudentsList = [];
+                snapshot.forEach((doc) => globalStudentsList.push({ id: doc.id, ...doc.data() }));
+                renderStudentsTable(globalStudentsList);
+            }, (error) => console.error("Listen Error: ", error));
+        }
+
+        function renderStudentsTable(students) {
+            const tbody = document.getElementById("students-table-body");
+            tbody.innerHTML = "";
+            if (students.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-slate-400 text-xs">لا يوجد طلاب مسجلين.</td></tr>`;
+                return;
+            }
+            students.forEach((s) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-right font-black text-slate-800">${s.name}</td>
+                    <td class="px-4 py-3 font-bold text-slate-600">${s.seatNumber}</td>
+                    <td class="px-4 py-3 text-xs font-bold text-slate-500">${s.gradeClass || "-"}</td>
+                    <td class="px-4 py-3 flex justify-center gap-2">
+                        <button onclick="window.selectStudentToEdit('${s.seatNumber}')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">تعديل</button>
+                        <button onclick="window.deleteStudent('${s.seatNumber}')" class="bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors">حذف</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.searchStudentsList = function() {
+            const term = document.getElementById("admin-search").value.toLowerCase().trim();
+            const filtered = globalStudentsList.filter(s => s.name.toLowerCase().includes(term) || s.seatNumber.toString().includes(term));
+            renderStudentsTable(filtered);
+        };
+
+        // 5. إضافة طالب جديد
+        window.createNewStudent = async function() {
+            const name = document.getElementById("inp-new-name").value.trim();
+            const seat = document.getElementById("inp-new-seat").value.trim();
+            const grade = document.getElementById("inp-new-grade").value;
+
+            if (!name || !seat) return window.showAlert("يرجى ملء الاسم ورقم الجلوس.", "warning");
+
+            const payload = {
+                seatNumber: seat, name: name, gradeClass: grade,
+                behavior: "", discipline: "", teacherNote: "",
+                grades: { arabic:{}, english:{}, quran:{}, islamic:{}, science:{}, math:{} }
+            };
+
+            try {
+                const docRef = doc(db, ...collectionPath.split('/'), seat);
+                const exist = await getDoc(docRef);
+                if (exist.exists()) return window.showAlert("رقم الجلوس هذا مسجل بالفعل.", "error");
+
+                await setDoc(docRef, payload);
+                window.showAlert("تم حفظ الطالب بنجاح.", "success");
+                document.getElementById("inp-new-name").value = "";
+                document.getElementById("inp-new-seat").value = "";
+                window.switchAdminPanel('list');
+            } catch (err) {
+                window.showAlert("فشل الحفظ. تأكد من تسجيل دخولك كمدير للمدرسة.", "error");
+            }
+        };
+
+        // 6. نظام المودال (النافذة المنبثقة للدرجات)
+        function buildModalTabs() {
+            const nav = document.getElementById("admin-tabs-nav");
+            nav.innerHTML = `<button onclick="window.switchModalTab('general')" id="tab-btn-general" class="modal-tab-btn whitespace-nowrap px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all shadow-md">سلوك وملاحظات</button>`;
+            subjectsList.forEach(sub => {
+                nav.innerHTML += `<button onclick="window.switchModalTab('${sub.key}')" id="tab-btn-${sub.key}" class="modal-tab-btn whitespace-nowrap px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all">${sub.label}</button>`;
+            });
+        }
+        buildModalTabs();
+
+        window.captureModalGrades = function() {
+            if (currentActiveModalTab !== "general") {
+                tempGradesData[currentActiveModalTab] = {
+                    oral: document.getElementById("inp-sub-oral").value,
+                    written: document.getElementById("inp-sub-written").value,
+                    t1_m1: document.getElementById("inp-sub-t1-m1").value,
+                    t1_m2: document.getElementById("inp-sub-t1-m2").value,
+                    t1_final: document.getElementById("inp-sub-t1-final").value,
+                    t2_m1: document.getElementById("inp-sub-t2-m1").value,
+                    t2_m2: document.getElementById("inp-sub-t2-m2").value,
+                    t2_final: document.getElementById("inp-sub-t2-final").value
+                };
+            }
+        }
+
+        window.switchModalTab = function(tabId) {
+            window.captureModalGrades();
+            currentActiveModalTab = tabId;
+
+            document.querySelectorAll(".modal-tab-btn").forEach(btn => btn.className = "modal-tab-btn whitespace-nowrap px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition-all");
+            document.getElementById(`tab-btn-${tabId}`).className = "modal-tab-btn whitespace-nowrap px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold transition-all shadow-md";
+
+            if (tabId === "general") {
+                document.getElementById("modal-content-general").classList.remove("hidden");
+                document.getElementById("modal-content-subjects").classList.add("hidden");
+            } else {
+                document.getElementById("modal-content-general").classList.add("hidden");
+                document.getElementById("modal-content-subjects").classList.remove("hidden");
+                document.getElementById("active-subject-title").innerText = subjectsList.find(s => s.key === tabId).label;
+                
+                const d = tempGradesData[tabId] || {};
+                document.getElementById("inp-sub-oral").value = d.oral || "";
+                document.getElementById("inp-sub-written").value = d.written || "";
+                document.getElementById("inp-sub-t1-m1").value = d.t1_m1 || "";
+                document.getElementById("inp-sub-t1-m2").value = d.t1_m2 || "";
+                document.getElementById("inp-sub-t1-final").value = d.t1_final || "";
+                document.getElementById("inp-sub-t2-m1").value = d.t2_m1 || "";
+                document.getElementById("inp-sub-t2-m2").value = d.t2_m2 || "";
+                document.getElementById("inp-sub-t2-final").value = d.t2_final || "";
+            }
+        }
+
+        window.selectStudentToEdit = function(seatNum) {
+            const student = globalStudentsList.find(s => s.seatNumber === seatNum);
+            if (!student) return;
+
+            currentEditingSeatNumber = seatNum;
+            document.getElementById("modal-student-name").innerText = `اسم الطالب: ${student.name}`;
+            document.getElementById("modal-student-info").innerText = `الجلوس: ${student.seatNumber} | الصف: ${student.gradeClass || "-"}`;
+            
+            document.getElementById("inp-behavior").value = student.behavior || "";
+            document.getElementById("inp-discipline").value = student.discipline || "";
+            document.getElementById("inp-edit-grade").value = student.gradeClass || "";
+            document.getElementById("inp-teacher-note").value = student.teacherNote || "";
+
+            tempGradesData = { ...{ arabic:{}, english:{}, quran:{}, islamic:{}, science:{}, math:{} }, ...student.grades };
+            
+            window.switchModalTab("general");
+            const modal = document.getElementById("grades-modal");
+            modal.classList.remove("hidden");
+            setTimeout(() => document.getElementById("modal-card").classList.remove("scale-95"), 10);
+        }
+
+        window.closeGradesModal = function() {
+            document.getElementById("modal-card").classList.add("scale-95");
+            setTimeout(() => {
+                document.getElementById("grades-modal").classList.add("hidden");
+                currentEditingSeatNumber = null;
+            }, 200);
+        }
+
+        window.saveStudentGrades = async function() {
+            window.captureModalGrades();
+            const student = globalStudentsList.find(s => s.seatNumber === currentEditingSeatNumber);
+            if (!student) return;
+
+            const payload = {
+                ...student,
+                behavior: document.getElementById("inp-behavior").value,
+                discipline: document.getElementById("inp-discipline").value,
+                gradeClass: document.getElementById("inp-edit-grade").value,
+                teacherNote: document.getElementById("inp-teacher-note").value,
+                grades: tempGradesData
+            };
+
+            try {
+                await setDoc(doc(db, ...collectionPath.split('/'), currentEditingSeatNumber), payload);
+                window.showAlert("تم حفظ التعديلات بنجاح سحابياً.", "success");
+                window.closeGradesModal();
+            } catch (err) {
+                window.showAlert("فشل الحفظ، تأكد من صلاحية حسابك.", "error");
+            }
+        };
+
+        window.deleteStudent = async function(seatNum) {
+            if (confirm("تأكيد الحذف النهائي للسجل؟")) {
+                try {
+                    await deleteDoc(doc(db, ...collectionPath.split('/'), seatNum));
+                    window.showAlert("تم حذف السجل بنجاح.", "success");
+                } catch (e) {
+                    window.showAlert("خطأ في الصلاحيات للحذف.", "error");
+                }
+            }
+        };
+
+        // 7. استعلام أولياء الأمور
+        window.searchStudentResult = async function() {
+            const seat = document.getElementById("search-seat-number").value.trim();
+            if(!seat) return window.showAlert("أدخل رقم الجلوس أولاً", "warning");
+
+            try {
+                const snap = await getDoc(doc(db, ...collectionPath.split('/'), seat));
+                if (snap.exists()) {
+                    displayResult(snap.data());
+                } else {
+                    window.showAlert("رقم الجلوس غير مسجل لدينا.", "error");
+                    document.getElementById("result-container").classList.add("hidden");
+                }
+            } catch(e) {
+                window.showAlert("خطأ في الاتصال بالخادم. يرجى التحقق من الشبكة.", "error");
+            }
+        };
+
+        function displayResult(s) {
+            document.getElementById("result-container").classList.remove("hidden");
+            document.getElementById("res-student-name").innerText = s.name || "-";
+            document.getElementById("res-seat-number").innerText = s.seatNumber || "-";
+            document.getElementById("res-student-grade").innerText = s.gradeClass || "-";
+            document.getElementById("res-discipline").innerText = s.discipline || "-";
+            document.getElementById("res-behavior").innerText = s.behavior || "-";
+            document.getElementById("res-teacher-note").innerText = s.teacherNote || "-";
+
+            const tbody = document.getElementById("res-subjects-table-body");
+            tbody.innerHTML = "";
+            subjectsList.forEach(sub => {
+                const g = s.grades?.[sub.key] || {};
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="px-4 py-3 text-right font-black text-slate-800">${sub.label}</td>
+                        <td class="px-2 py-3">${g.oral||"-"}</td>
+                        <td class="px-2 py-3">${g.written||"-"}</td>
+                        <td class="px-2 py-3 bg-emerald-50/50">${g.t1_m1||"-"}</td>
+                        <td class="px-2 py-3 bg-emerald-50/50">${g.t1_m2||"-"}</td>
+                        <td class="px-2 py-3 bg-emerald-100/50 text-emerald-800 font-black">${g.t1_final||"-"}</td>
+                        <td class="px-2 py-3 bg-teal-50/50">${g.t2_m1||"-"}</td>
+                        <td class="px-2 py-3 bg-teal-50/50">${g.t2_m2||"-"}</td>
+                        <td class="px-2 py-3 bg-teal-100/50 text-teal-800 font-black">${g.t2_final||"-"}</td>
+                    </tr>`;
+            });
+            document.getElementById("result-container").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.addEventListener('DOMContentLoaded', startFirebaseSession);
+    </script>
+
+    <!-- UI Helpers (التنقل وطباعة المتصفح) -->
+    <script>
+        window.navigateTo = function(view) {
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-admin-login').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+            document.getElementById('nav-btn-admin-gate').classList.add('hidden');
+            document.getElementById('nav-btn-logout').classList.add('hidden');
+
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            
+            if(view === 'home') document.getElementById('nav-btn-admin-gate').classList.remove('hidden');
+            if(view === 'admin') document.getElementById('nav-btn-logout').classList.remove('hidden');
+        };
+
+        window.switchAdminPanel = function(panel) {
+            document.getElementById('panel-add').classList.add('hidden');
+            document.getElementById('panel-list').classList.add('hidden');
+            document.getElementById(`panel-${panel}`).classList.remove('hidden');
+
+            document.getElementById('btn-panel-add').className = "flex-1 sm:flex-none px-6 py-3 bg-white text-slate-700 font-bold rounded-xl text-sm transition-all border border-slate-200";
+            document.getElementById('btn-panel-list').className = "flex-1 sm:flex-none px-6 py-3 bg-white text-slate-700 font-bold rounded-xl text-sm transition-all border border-slate-200";
+            document.getElementById(`btn-panel-${panel}`).className = "flex-1 sm:flex-none px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl text-sm transition-all shadow-md";
+        };
+
+        window.scrollToSearchSection = function() {
+            document.getElementById("parents-search-section").scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.showAlert = function(msg, type) {
+            document.getElementById("alert-message").innerText = msg;
+            document.getElementById("alert-title").innerText = type === 'success' ? "نجاح" : type === 'warning' ? "تنبيه" : "خطأ";
+            const modal = document.getElementById("alert-modal");
+            modal.classList.remove("hidden");
+            setTimeout(() => document.getElementById("alert-card").classList.remove("scale-95"), 10);
+        }
+
+        window.closeAlertModal = function() {
+            document.getElementById("alert-card").classList.add("scale-95");
+            setTimeout(() => document.getElementById("alert-modal").classList.add("hidden"), 200);
+        }
+
+        // الحل الجذري للطباعة والـ PDF (ميزة المتصفح الأصلية)
+        window.handlePrintPDF = function() {
+            window.showAlert("للحفاظ على جودة اللغة العربية وعدم ظهور صفحة بيضاء، سيتم فتح نافذة الطباعة الخاصة بجهازك. الرجاء اختيار 'حفظ بتنسيق PDF' (Save as PDF) من القائمة العلوية للنافذة.", "success");
+            setTimeout(() => {
+                window.closeAlertModal();
+                window.print();
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
+
+
+```
